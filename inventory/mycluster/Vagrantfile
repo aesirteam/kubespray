@@ -1,0 +1,76 @@
+cluster = [
+  { ip: "10.201.250.142", name: "kube-master" }, 
+  { ip: "10.201.250.143", name: "kube-node1"  }, 
+  { ip: "10.201.250.144", name: "kube-node2"  }
+]
+
+Vagrant.configure(2) do |config|
+	config.vm.box = "centos/7"
+	config.vm.box_url =  "http://mirrors.ustc.edu.cn/centos-cloud/centos/7/vagrant/x86_64/images/CentOS-7-x86_64-Vagrant-2002_01.VirtualBox.box"
+	config.vm.box_download_checksum_type = "sha256"
+	config.vm.box_download_checksum = "1e1127ac9dbb24cd61df71eae46d02db7580dbfa233fbba9c7316dfe29a530e0"
+	config.vm.box_check_update = false
+	config.ssh.insert_key = false  
+
+	cluster.each do |server|
+    	config.vm.define vm_name = server[:name] do |node|
+    		node.vm.hostname = vm_name    
+      		node.vm.network :private_network, ip: server[:ip]
+
+    		node.vm.provider "virtualbox" do |vb|
+    			vb.cpus = 2 if ! server[:vcpu]
+        		vb.memory = 2048 if ! server[:ram]
+    			vb.gui = false
+    		end
+
+    		node.vm.provision "shell", :privileged => true, inline: <<-SSHD
+    			echo -e "-----BEGIN RSA PRIVATE KEY-----
+				MIIEogIBAAKCAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzI
+				w+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoP
+				kcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2
+				hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NO
+				Td0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcW
+				yLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQIBIwKCAQEA4iqWPJXtzZA68mKd
+				ELs4jJsdyky+ewdZeNds5tjcnHU5zUYE25K+ffJED9qUWICcLZDc81TGWjHyAqD1
+				Bw7XpgUwFgeUJwUlzQurAv+/ySnxiwuaGJfhFM1CaQHzfXphgVml+fZUvnJUTvzf
+				TK2Lg6EdbUE9TarUlBf/xPfuEhMSlIE5keb/Zz3/LUlRg8yDqz5w+QWVJ4utnKnK
+				iqwZN0mwpwU7YSyJhlT4YV1F3n4YjLswM5wJs2oqm0jssQu/BT0tyEXNDYBLEF4A
+				sClaWuSJ2kjq7KhrrYXzagqhnSei9ODYFShJu8UWVec3Ihb5ZXlzO6vdNQ1J9Xsf
+				4m+2ywKBgQD6qFxx/Rv9CNN96l/4rb14HKirC2o/orApiHmHDsURs5rUKDx0f9iP
+				cXN7S1uePXuJRK/5hsubaOCx3Owd2u9gD6Oq0CsMkE4CUSiJcYrMANtx54cGH7Rk
+				EjFZxK8xAv1ldELEyxrFqkbE4BKd8QOt414qjvTGyAK+OLD3M2QdCQKBgQDtx8pN
+				CAxR7yhHbIWT1AH66+XWN8bXq7l3RO/ukeaci98JfkbkxURZhtxV/HHuvUhnPLdX
+				3TwygPBYZFNo4pzVEhzWoTtnEtrFueKxyc3+LjZpuo+mBlQ6ORtfgkr9gBVphXZG
+				YEzkCD3lVdl8L4cw9BVpKrJCs1c5taGjDgdInQKBgHm/fVvv96bJxc9x1tffXAcj
+				3OVdUN0UgXNCSaf/3A/phbeBQe9xS+3mpc4r6qvx+iy69mNBeNZ0xOitIjpjBo2+
+				dBEjSBwLk5q5tJqHmy/jKMJL4n9ROlx93XS+njxgibTvU6Fp9w+NOFD/HvxB3Tcz
+				6+jJF85D5BNAG3DBMKBjAoGBAOAxZvgsKN+JuENXsST7F89Tck2iTcQIT8g5rwWC
+				P9Vt74yboe2kDT531w8+egz7nAmRBKNM751U/95P9t88EDacDI/Z2OwnuFQHCPDF
+				llYOUI+SpLJ6/vURRbHSnnn8a/XG+nzedGH5JGqEJNQsz+xT2axM0/W/CRknmGaJ
+				kda/AoGANWrLCz708y7VYgAtW2Uf1DPOIYMdvo6fxIB5i9ZfISgcJ/bbCUkFrhoH
+				+vq/5CIWxCPp0f85R4qxxQ5ihxJ0YDQT9Jpx4TMss4PSavPaBH3RXow5Ohe+bYoQ
+				NE5OgEXk2wVfZczCZpigBKbKZHNYcelXtTt/nP3rsCuGcM4h53s=
+				-----END RSA PRIVATE KEY-----" > /home/vagrant/.ssh/id_rsa
+
+				chown -R vagrant /home/vagrant/.ssh
+				cp -rf /home/vagrant/.ssh /root/
+
+				chmod +w /etc/sudoers
+				echo "%wheel ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+				chmod -w /etc/sudoers
+				gpasswd -a vagrant wheel
+
+				sed -i "/PasswordAuthentication/d" /etc/ssh/sshd_config
+				echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
+				echo "PasswordAuthentication yes" >> /etc/ssh/sshd_config
+				sudo systemctl restart sshd
+    		SSHD
+    		
+    		node.vm.provision "shell", :privileged => true, inline: <<-INIT
+    			swapoff -a
+    			systemctl stop firewalld
+    			systemctl disable firewalld
+    		INIT
+    	end
+	end
+end
