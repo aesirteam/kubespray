@@ -14,7 +14,8 @@ kube_apiserver_bind_address: 0.0.0.0
 
 # A port range to reserve for services with NodePort visibility.
 # Inclusive at both ends of the range.
-kube_apiserver_node_port_range: "30000-32767"
+#kube_apiserver_node_port_range: "30000-32767"
+kube_apiserver_node_port_range: "1-20000"
 
 # ETCD backend for k8s data
 kube_apiserver_storage_backend: etcd3
@@ -131,7 +132,9 @@ kube_webhook_authorization_url_skip_tls_verify: false
 kubelet_preferred_address_types: 'InternalDNS,InternalIP,Hostname,ExternalDNS,ExternalIP'
 
 ## Extra args for k8s components passing by kubeadm
-kube_kubeadm_apiserver_extra_args: {}
+kube_kubeadm_apiserver_extra_args:
+  service-account-issuer: "kubernetes.default.svc"
+  service-account-signing-key-file: "/etc/kubernetes/ssl/sa.key"
 kube_kubeadm_controller_extra_args: {}
 kube_kubeadm_scheduler_extra_args: {}
 
