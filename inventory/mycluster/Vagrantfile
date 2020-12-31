@@ -1,7 +1,7 @@
 cluster = [
-  { ip: "10.10.1.3", name: "k8s-master1" }, 
-  { ip: "10.10.1.4", name: "k8s-node1"   }, 
-  { ip: "10.10.1.5", name: "k8s-node2"   },
+  { ip: "10.10.1.3", name: "k8s-master1", vcpu: 2, ram: 2048 }, 
+  { ip: "10.10.1.4", name: "k8s-node1",   vcpu: 2, ram: 3072 }, 
+  { ip: "10.10.1.5", name: "k8s-node2",   vcpu: 2, ram: 3072 },
 ]
 
 Vagrant.configure(2) do |config|
@@ -16,10 +16,13 @@ Vagrant.configure(2) do |config|
     	config.vm.define vm_name = server[:name] do |node|
     		node.vm.hostname = vm_name    
       		node.vm.network :private_network, ip: server[:ip]
+            
+            $vm_cpus = server[:vcpu]
+            $vm_memory = server[:ram]
 
     		node.vm.provider "virtualbox" do |vb|
-    			vb.cpus = 2 if ! server[:vcpu]
-        		vb.memory = 2048 if ! server[:ram]
+    			vb.cpus = server[:vcpu]
+        		vb.memory = server[:ram]
     			vb.gui = false
     		end
 

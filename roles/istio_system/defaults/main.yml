@@ -1,0 +1,9 @@
+---
+local_release_dir: "/tmp/releases"
+istio_version: "1.8.1"
+
+istio_image_repo: "hub.bigdatagz.com/istio"
+
+# Download URLs
+istio_download_file: "istio-{{ istio_version }}-linux-amd64.tar.gz"
+istio_download_url: "https://github.com/istio/istio/releases/download/{{ istio_version }}/{{ istio_download_file }}"

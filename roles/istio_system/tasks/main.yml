@@ -1,0 +1,61 @@
+---
+- stat:
+    path: "{{ local_release_dir }}/{{ istio_download_file }}"
+  register: file_path
+
+- name: download | Prepare working directories and variables
+  get_url: 
+    url: "{{ istio_download_url }}"
+    dest: "{{ local_release_dir }}/{{ istio_download_file }}"
+    mode: 0700
+  when:
+    - not file_path.stat.exists
+
+- name: extract_file | Unpacking archive
+  unarchive:
+    src: "{{ local_release_dir }}/{{ istio_download_file }}"
+    dest: "{{ local_release_dir }}"
+    mode: 0755
+    copy: no
+  when:
+    - file_path.stat.exists
+  
+
+- name: generate_manifest | Use default profile
+  shell:
+    cmd: |
+      bin/istioctl manifest generate --set hub={{ istio_image_repo }} -f manifests/profiles/default.yaml > /etc/kubernetes/istio-system.yml
+  args:
+    chdir: "{{ local_release_dir }}/istio-{{ istio_version }}"
+
+- name: deployment_cluster | Patch service NodePort
+  shell:
+    cmd: |
+      PATH=$PATH:/usr/local/bin
+      kubectl create namespace istio-system || true
+      kubectl apply -f /etc/kubernetes/istio-system.yml
+      kubectl patch service istio-ingressgateway -n istio-system -p '{"spec": { "type": "NodePort" }}' 
+  register: deploy_result
+
+- debug: var=deploy_result.stdout_lines
+
+- template: src={{ item.src }} dest={{ item.dest }}
+  with_items:
+    - { src: "bookinfo.yaml.j2", dest: "/tmp/bookinfo.yaml" }
+    - { src: "bookinfo-gateway.yaml.j2", dest: "/tmp/bookinfo-gateway.yaml" }
+    - { src: "destination-rule-all.yaml.j2", dest: "/tmp/destination-rule-all.yaml" }
+    - { src: "virtual-service-all.yaml.j2", dest: "/tmp/virtual-service-all.yaml" }
+  tags:
+    - demo
+
+
+- name: deployment_bookinfo
+  shell:
+    cmd: |
+      PATH=$PATH:/usr/local/bin
+      kubectl -n bookinfo apply -f /tmp/bookinfo.yaml
+      kubectl -n bookinfo apply -f /tmp/bookinfo-gateway.yaml
+      kubectl -n bookinfo apply -f /tmp/destination-rule-all.yaml
+      kubectl -n bookinfo apply -f /tmp/virtual-service-all.yaml
+  tags:
+    - demo
