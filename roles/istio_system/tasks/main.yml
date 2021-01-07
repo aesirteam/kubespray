@@ -39,17 +39,72 @@
 
 - debug: var=deploy_result.stdout_lines
 
+#####################################################################################################
 - template: src={{ item.src }} dest={{ item.dest }}
   with_items:
-    - { src: "bookinfo.yaml.j2", dest: "/tmp/bookinfo.yaml" }
-    - { src: "bookinfo-gateway.yaml.j2", dest: "/tmp/bookinfo-gateway.yaml" }
-    - { src: "destination-rule-all.yaml.j2", dest: "/tmp/destination-rule-all.yaml" }
-    - { src: "virtual-service-all.yaml.j2", dest: "/tmp/virtual-service-all.yaml" }
+    - { src: "prometheus.yaml.j2", dest: "/tmp/prometheus.yaml" }
+    - { src: "prometheus-gateway.yaml.j2", dest: "/tmp/prometheus-gateway.yaml" }
+    - { src: "grafana.yaml.j2", dest: "/tmp/grafana.yaml" }
+    - { src: "grafana-gateway.yaml.j2", dest: "/tmp/grafana-gateway.yaml" }
+  tags:
+    - addons
+
+- name: deployment_mertics
+  shell:
+    cmd: |
+      PATH=$PATH:/usr/local/bin
+      kubectl -n istio-system apply -f /tmp/prometheus.yaml
+      kubectl -n istio-system apply -f /tmp/grafana.yaml
+      kubectl -n istio-system apply -f /tmp/prometheus-gateway.yaml
+      kubectl -n istio-system apply -f /tmp/grafana-gateway.yaml
+  tags:
+    - addons
+
+
+- template: src={{ item.src }} dest={{ item.dest }}
+  with_items:
+    - { src: "jaeger.yaml.j2", dest: "/tmp/jaeger.yaml" }
+    - { src: "tracing-gateway.yaml.j2", dest: "/tmp/tracing-gateway.yaml" }
+  tags:
+    - addons
+
+- name: deployment_tracing
+  shell:
+    cmd: |
+      PATH=$PATH:/usr/local/bin
+      kubectl -n istio-system apply -f /tmp/jaeger.yaml
+      kubectl -n istio-system apply -f /tmp/tracing-gateway.yaml
+  tags:
+    - addons
+
+- template: src={{ item.src }} dest={{ item.dest }}
+  with_items:
+    - { src: "kiali.yaml.j2", dest: "/tmp/kiali.yaml" }
+    - { src: "kiali-gateway.yaml.j2", dest: "/tmp/kiali-gateway.yaml" }
+  tags:
+    - addons
+
+- name: deployment_kiali
+  shell:
+    cmd: |
+      PATH=$PATH:/usr/local/bin
+      kubectl -n istio-system apply -f /tmp/kiali.yaml
+      kubectl -n istio-system apply -f /tmp/kiali-gateway.yaml
+  tags:
+    - addons
+
+#####################################################################################################
+- template: src={{ item.src }} dest={{ item.dest }}
+  with_items:
+    - { src: "demo/bookinfo.yaml.j2", dest: "/tmp/bookinfo.yaml" }
+    - { src: "demo/bookinfo-gateway.yaml.j2", dest: "/tmp/bookinfo-gateway.yaml" }
+    - { src: "demo/destination-rule-all.yaml.j2", dest: "/tmp/destination-rule-all.yaml" }
+    - { src: "demo/virtual-service-all.yaml.j2", dest: "/tmp/virtual-service-all.yaml" }
   tags:
     - demo
 
 
-- name: deployment_bookinfo
+- name: deployment_demo
   shell:
     cmd: |
       PATH=$PATH:/usr/local/bin

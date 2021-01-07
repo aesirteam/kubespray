@@ -22,5 +22,6 @@
   any_errors_fatal: "{{ any_errors_fatal | default(true) }}"
   roles:
     - { role: istio_system }
+    - { role: istio_system, tags: addons }
     - { role: istio_system, tags: demo }
   run_once: yes

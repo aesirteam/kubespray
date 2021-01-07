@@ -7,3 +7,8 @@ istio_image_repo: "hub.bigdatagz.com/istio"
 # Download URLs
 istio_download_file: "istio-{{ istio_version }}-linux-amd64.tar.gz"
 istio_download_url: "https://github.com/istio/istio/releases/download/{{ istio_version }}/{{ istio_download_file }}"
+
+
+# Kiali Dashboard
+kiali_username: "admin"
+kiali_passphrase: "admin"
